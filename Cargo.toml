@@ -1,0 +1,20 @@
+[package]
+name = "lua_bundler"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+color-print = "0.3.4"
+dialoguer = "0.10.4"
+indoc = "2.0.3"
+serde = {version = "1.0.188", features = ["derive"]}
+serde_json = "1.0.105"
+darklua = "0.10.2"
+clap = { version = "4.4.1", features = ["derive"] }
+stacker = "0.1.15"
+ws = "0.9.2"
+clearscreen = "2.0.1"
+
