@@ -1,5 +1,5 @@
 [package]
-name = "lua_bundler"
+name = "luabundle"
 version = "0.1.0-alpha"
 authors = ["sw1ndler <@425797455486124032>"]
 edition = "2021"
@@ -7,7 +7,7 @@ readme = "README.md"
 description = "A bundler for Luau scripts"
 repository = "https://github.com/Sw1ndlerScripts/LuaBundler"
 license = "MIT"
-keywords = ["lua", "bundler"]
+keywords = ["lua", "bundler", "luau", "bundle"]
 
 [badges]
 github = { repository = "Sw1ndlerScripts/LuaBundler"}
@@ -23,4 +23,8 @@ darklua = "0.10.2"
 clap = { version = "4.4.1", features = ["derive"] }
 stacker = "0.1.15"
 clearscreen = "2.0.1"
+
+[[bin]]
+name = "darklua"
+path = "src/bin.rs"
 

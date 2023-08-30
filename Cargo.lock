@@ -659,7 +659,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lua_bundler"
+name = "luabundle"
 version = "0.1.0-alpha"
 dependencies = [
  "anyhow",
