@@ -1,9 +1,17 @@
 [package]
 name = "lua_bundler"
-version = "0.1.0"
+version = "0.1.0-alpha"
+authors = ["sw1ndler <@425797455486124032>"]
 edition = "2021"
+readme = "README.md"
+description = "A bundler for Luau scripts"
+repository = "https://github.com/Sw1ndlerScripts/LuaBundler"
+license = "MIT"
+keywords = ["lua", "bundler"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[badges]
+github = { repository = "Sw1ndlerScripts/LuaBundler"}
+
 
 [dependencies]
 anyhow = "1.0.75"
