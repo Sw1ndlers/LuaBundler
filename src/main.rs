@@ -67,12 +67,34 @@ fn require_function_commented(line: String, require_function: String) -> bool {
     return false;
 }
 
+fn format_file(file: &PathBuf, minify: bool, beautify: bool) {
+    let resources = Resources::from_file_system();
+    let mut configuration = Configuration::empty();
+
+    if minify {
+        configuration = Configuration::empty().with_generator(GeneratorParameters::default_dense());
+    }
+    if beautify {
+        configuration = Configuration::empty().with_generator(GeneratorParameters::default_readable());
+    };
+
+    let process_options = darklua_core::Options::new(PathBuf::from(&file))
+        .with_output(PathBuf::from(&file))
+        .with_configuration(configuration);
+
+    stacker::maybe_grow(1024 * 1024 * 2, 1024 * 1024 * 3, || {
+        darklua_core::process(&resources, process_options);
+    });
+}
+
 fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) -> String {
-    let input_string = fs::read_to_string(&input_file).unwrap();
     let mut root_path = root_path.clone();
+    let input_string = fs::read_to_string(&input_file).unwrap();
 
     let mut lines: Vec<String> = split(&input_string, "\n");
     lines = lines.iter().map(|s| s.trim().to_string()).collect(); // remove whitespace
+
+    lines.retain(|x| !x.is_empty());
 
     let mut new_lines: Vec<String> = Vec::new();
     for (i, line) in lines.iter().enumerate() {
@@ -141,7 +163,6 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
 
 fn bundle(config: &ConfigStruct) {
     let root_path = env::current_dir().unwrap();
-
     let entry_file = root_path.join(&config.entry_file);
 
     let output = parse(&root_path, entry_file, &config.require_function);
@@ -149,34 +170,9 @@ fn bundle(config: &ConfigStruct) {
 
     // ---------- minify or beautify ----------
     
-    let resources = Resources::from_file_system();
-    let darklua_options = Options {
-        input_path: PathBuf::from(&config.output_file),
-        output_path: PathBuf::from(&config.output_file),
-        column_span: Some(10),
-    };
-    
     if config.minify || config.beautify {
-        let mut configuration = Configuration::empty();
-
-        if config.minify {
-            configuration = Configuration::empty().with_generator(GeneratorParameters::default_dense());
-        }
-        if config.beautify {
-            configuration = Configuration::empty().with_generator(GeneratorParameters::default_readable());
-        };
-    
-        let process_options = darklua_core::Options::new(PathBuf::from(&darklua_options.input_path))
-            .with_output(PathBuf::from(&darklua_options.output_path))
-            .with_configuration(configuration);
-
-        // darklua_core::process(&resources, process_options);
-
-        stacker::maybe_grow(1024 * 1024 * 2, 1024 * 1024 * 3, || {
-            darklua_core::process(&resources, process_options);
-        });
+        format_file(&PathBuf::from(&config.output_file), config.minify, config.beautify)
     }
-    
 }
 
 fn handle_active_bundling() {
