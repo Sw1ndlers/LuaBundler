@@ -236,19 +236,25 @@ fn main() -> Result<(), anyhow::Error> {
             .interact()
             .unwrap();
 
-        // do these settings look right?
+
         cprintln!(
             "
-            <green> Do these settings look right? </green>
+<bold><green> Do these settings look right? </green> </>
 
-            <bold> Require Function: </> <cyan> {} </cyan>
-            <bold> Entry File: </> <cyan> {} </cyan>
-            <bold> Output File: </> <cyan> {} </cyan>
-            <bold> Minify: </> <cyan> {} </cyan>
-            <bold> Beautify: </> <cyan> {} </cyan>
+<bold>Require Function: </> <cyan> {} </cyan>
+<bold>Entry File: </> <cyan> {} </cyan>
+<bold>Output File: </> <cyan> {} </cyan>
+<bold>Minify: </> <cyan> {} </cyan>
+<bold>Beautify: </> <cyan> {} </cyan>
             ",
-            require_function, entry_file, output_file, minify, beautify
+            require_function,
+            entry_file,
+            output_file,
+            minify,
+            beautify,
         );
+
+
 
         config = ConfigStruct {
             require_function,
@@ -258,8 +264,23 @@ fn main() -> Result<(), anyhow::Error> {
             beautify,
         };
 
+
+        let confirm = Confirm::with_theme(&ColorfulTheme::default())
+            .with_prompt("Confirm?")
+            .default(true)
+            .interact()
+            .unwrap();
+
+        if confirm == false {
+            cprintln!("<bright-red>Setup canceled!</bright-red> Press Enter to Exit");
+            std::process::exit(0);
+        }
+
         let json = serde_json::to_string(&config).unwrap();
-        fs::write(root_path.join("lbundle_config.json"), json).unwrap();
+        fs::write(root_path.join("lbundle.json"), json).unwrap();
+
+        cprintln!("\n<bold><green>Setup complete!</green> Run the program again to bundle your code.</>\nPress Enter to Exit");
+        std::process::exit(0);
     } else {
         let config_string = fs::read_to_string(config_path).unwrap();
         config = serde_json::from_str(&config_string).unwrap();
@@ -273,6 +294,7 @@ fn main() -> Result<(), anyhow::Error> {
 
     bundle(&config.clone());
 
-    cprintln!("<green>Bundled in: </green><cyan>{:?}</cyan>", start.elapsed());
+    cprintln!("<green>Bundled in: </green><cyan>{:?}</cyan>\nPress Enter to Exit", start.elapsed());
+    std::io::stdin().read_line(&mut String::new()).unwrap();
     Ok(())
 }
