@@ -23,8 +23,3 @@ darklua = "0.10.2"
 clap = { version = "4.4.1", features = ["derive"] }
 stacker = "0.1.15"
 clearscreen = "2.0.1"
-
-[[bin]]
-name = "darklua"
-path = "src/bin.rs"
-
