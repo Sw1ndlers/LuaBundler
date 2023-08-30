@@ -13,6 +13,7 @@ use color_print::cprintln;
 use dialoguer::{theme::ColorfulTheme, Confirm, Input};
 use darklua_core::{Configuration, GeneratorParameters, Resources};
 
+// make windows support ansi colors | REG ADD HKCU\CONSOLE /f /v VirtualTerminalLevel /t REG_DWORD /d 1
 
 // Structs
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -74,12 +75,23 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
     lines = lines.iter().map(|s| s.trim().to_string()).collect(); // remove whitespace
 
     let mut new_lines: Vec<String> = Vec::new();
-    for line in lines {
+    for (i, line) in lines.iter().enumerate() {
         if line.contains(require_function) {
             
             if require_function_commented(line.clone(), require_function.clone()) {
-                new_lines.push(line);
+                new_lines.push(line.to_string());
                 continue;
+            }
+
+            let last_line = lines.get(i - 1);
+            let mut add_semicolon = false;
+
+            match last_line {
+                Some(last_line) => {
+                    let last_line = last_line.trim();
+                    add_semicolon = last_line.ends_with(")")
+                }
+                None => {}
             }
 
             let dont_run = line.contains("[dont_run]");
@@ -109,17 +121,17 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             let whole_function = format!("loadmodule(\"{}\")", require_content); // loadmodule("module.lua")
 
             let output = format!(
-                "(function() {} end){}",
+                "{}(function() {} end){}",
 
+                if add_semicolon { ";" } else { "" },
                 parse(&root_path, require_path, require_function),
-
                 if dont_run == false { "()" } else { "" },
             );
             
             let output = line.replace(&whole_function, output.as_str());
             new_lines.push(output);
         } else {
-            new_lines.push(line);
+            new_lines.push(line.to_string());
         }
     }
 
@@ -177,7 +189,7 @@ fn handle_active_bundling() {
 
     let root_path = env::current_dir().unwrap();
 
-    let config_path = root_path.join("lbundle_config.json");
+    let config_path = root_path.join("lbundle.json");
     let config_string = fs::read_to_string(config_path).unwrap();
     let config: ConfigStruct = serde_json::from_str(&config_string).unwrap();
 
@@ -204,7 +216,7 @@ fn main() -> Result<(), anyhow::Error> {
     let active_bundling = args.active;
 
     let root_path = env::current_dir().unwrap();
-    let config_path = root_path.join("lbundle_config.json");
+    let config_path = root_path.join("lbundle.json");
     let config: ConfigStruct;
 
     // if config does not exist, create it
@@ -241,11 +253,11 @@ fn main() -> Result<(), anyhow::Error> {
             "
 <bold><green> Do these settings look right? </green> </>
 
-<bold>Require Function: </> <cyan> {} </cyan>
-<bold>Entry File: </> <cyan> {} </cyan>
-<bold>Output File: </> <cyan> {} </cyan>
-<bold>Minify: </> <cyan> {} </cyan>
-<bold>Beautify: </> <cyan> {} </cyan>
+<bold> Require Function: </> <cyan> {} </cyan>
+<bold> Entry File: </> <cyan> {} </cyan>
+<bold> Output File: </> <cyan> {} </cyan>
+<bold> Minify: </> <cyan> {} </cyan>
+<bold> Beautify: </> <cyan> {} </cyan>
             ",
             require_function,
             entry_file,
@@ -280,6 +292,7 @@ fn main() -> Result<(), anyhow::Error> {
         fs::write(root_path.join("lbundle.json"), json).unwrap();
 
         cprintln!("\n<bold><green>Setup complete!</green> Run the program again to bundle your code.</>\nPress Enter to Exit");
+        std::io::stdin().read_line(&mut String::new()).unwrap();
         std::process::exit(0);
     } else {
         let config_string = fs::read_to_string(config_path).unwrap();
@@ -294,7 +307,6 @@ fn main() -> Result<(), anyhow::Error> {
 
     bundle(&config.clone());
 
-    cprintln!("<green>Bundled in: </green><cyan>{:?}</cyan>\nPress Enter to Exit", start.elapsed());
-    std::io::stdin().read_line(&mut String::new()).unwrap();
+    cprintln!("<green>Bundled in: </green><cyan>{:?}</cyan>", start.elapsed());
     Ok(())
 }
