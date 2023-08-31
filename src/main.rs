@@ -1,5 +1,5 @@
 // Library Imports
-use std::{env, fs, path::PathBuf, fmt::Debug};
+use std::{env, fs, path::PathBuf, fmt::Debug, collections::HashMap};
 use anyhow;
 use clap::Parser;
 
@@ -42,6 +42,13 @@ pub struct Options {
 struct Args {
     #[arg(short, long, default_value_t = false)]
     active: bool,   
+}
+
+#[derive(Eq, Hash, PartialEq)]
+enum Macro {
+    DontRun,
+    AbsPath,
+    None
 }
 
 // Functions
@@ -87,14 +94,44 @@ fn format_file(file: &PathBuf, minify: bool, beautify: bool) {
     });
 }
 
+fn get_macros(lines: &Vec<String>) -> (HashMap<usize, Macro>, Vec<String>) {
+    let mut macro_lines: HashMap<usize, Macro> = HashMap::new();
+    let mut new_lines: Vec<String> = Vec::new();
+
+    for (i, line) in lines.clone().iter().enumerate() {
+        let mut macro_found = false;
+
+        if line.contains("[dont_run]") {
+            macro_lines.insert(i, Macro::DontRun);
+            macro_found = true;
+        }
+        if line.contains("[abs_path]") {
+            macro_lines.insert(i, Macro::AbsPath);
+            macro_found = true;
+        }
+
+        if macro_found {
+            let without_comment = &split(line, "--")[0];
+            new_lines.push(without_comment.trim().to_string());
+        } else {
+            new_lines.push(line.to_string());
+        }
+    }
+    return (macro_lines, new_lines);
+}
+
 fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) -> String {
     let mut root_path = root_path.clone();
+
     let input_string = fs::read_to_string(&input_file).unwrap();
-
     let mut lines: Vec<String> = split(&input_string, "\n");
-    lines = lines.iter().map(|s| s.trim().to_string()).collect(); // remove whitespace
+    
+    let (macros, new_lines) = get_macros(&lines); // remove comments and get macros
 
-    lines.retain(|x| !x.is_empty());
+    lines = new_lines;
+
+    lines = lines.iter().map(|s| s.trim().to_string()).collect(); // remove whitespace
+    lines.retain(|x| !x.is_empty()); // remove empty lines
 
     let mut new_lines: Vec<String> = Vec::new();
     for (i, line) in lines.iter().enumerate() {
@@ -116,14 +153,17 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
                 None => {}
             }
 
-            let dont_run = line.contains("[dont_run]");
-            let absolute_path = line.contains("[abs_path]");
+            let macro_type = match macros.get(&i) {
+                Some(macro_type) => macro_type,
+                None => &Macro::None,
+            };
+
 
             let relative_folder = input_file.to_path_buf(); // root\folder\module.lua
             let relative_folder = relative_folder.parent().unwrap(); // root\folder
             let relative_folder = PathBuf::from(relative_folder); 
 
-            if absolute_path == false {
+            if macro_type != &Macro::AbsPath {
                 root_path = relative_folder.clone();
             }
 
@@ -143,13 +183,13 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             let whole_function = format!("loadmodule(\"{}\")", require_content); // loadmodule("module.lua")
 
             let output = format!(
-                "{}(function() {} end){}",
+                "{semicolon}(function() {content} end){function_call}",
 
-                if add_semicolon { ";" } else { "" },
-                parse(&root_path, require_path, require_function),
-                if dont_run == false { "()" } else { "" },
+                semicolon = (if add_semicolon { ";" } else { "" }),
+                content = (parse(&root_path, require_path, require_function)),
+                function_call = (if macro_type != &Macro::DontRun { "()" } else { "" }),
             );
-            
+
             let output = line.replace(&whole_function, output.as_str());
             new_lines.push(output);
         } else {
