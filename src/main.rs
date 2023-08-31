@@ -1,19 +1,26 @@
-#![allow(unused_parens)]
+// #![allow(unused_parens)]
 
 // Library Imports
-use std::{env, fs, path::PathBuf, fmt::Debug, collections::HashMap};
-use anyhow;
-use clap::Parser;
 
+mod utils;
+use crate::utils::{
+    format_file, 
+    get_macros, 
+    require_function_commented, 
+    split,
+    Macro
+};
+
+use dialoguer::{theme::ColorfulTheme, Confirm, Input};
+use std::{env, fs, path::PathBuf, fmt::Debug};
 use serde::{Deserialize, Serialize};
-use serde_json;
-
-use stacker;
-use clearscreen;
 
 use color_print::cprintln;
-use dialoguer::{theme::ColorfulTheme, Confirm, Input};
-use darklua_core::{Configuration, GeneratorParameters, Resources};
+
+use clap::Parser;
+use clearscreen;
+use serde_json;
+use anyhow;
 
 // make windows support ansi colors | REG ADD HKCU\CONSOLE /f /v VirtualTerminalLevel /t REG_DWORD /d 1
 
@@ -46,81 +53,10 @@ struct Args {
     active: bool,   
 }
 
-#[derive(Eq, Hash, PartialEq)]
-enum Macro {
-    DontRun,
-    AbsPath,
-    None
-}
+
 
 // Functions
 
-fn split(input: &str, to_split: &str) -> Vec<String> {
-    let res: Vec<String> = input.split(to_split).map(|s| s.to_string()).collect();
-    return res;
-}
-
-fn require_function_commented(line: String, require_function: String) -> bool {
-    let comment_position = line.find("--");
-    let loadmodule_position = line.find(&require_function);
-
-    if comment_position.is_some() && loadmodule_position.is_some() {
-        let comment_position = comment_position.unwrap();
-        let loadmodule_position = loadmodule_position.unwrap();
-
-        if comment_position < loadmodule_position {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-fn format_file(file: &PathBuf, minify: bool, beautify: bool) {
-    let resources = Resources::from_file_system();
-    let mut configuration = Configuration::empty();
-
-    if minify {
-        configuration = Configuration::empty().with_generator(GeneratorParameters::default_dense());
-    }
-    if beautify {
-        configuration = Configuration::empty().with_generator(GeneratorParameters::default_readable());
-    };
-
-    let process_options = darklua_core::Options::new(PathBuf::from(&file))
-        .with_output(PathBuf::from(&file))
-        .with_configuration(configuration);
-
-    stacker::maybe_grow(1024 * 1024 * 2, 1024 * 1024 * 3, || {
-        darklua_core::process(&resources, process_options);
-    });
-}
-
-fn get_macros(lines: &Vec<String>) -> (HashMap<usize, Macro>, Vec<String>) {
-    let mut macro_lines: HashMap<usize, Macro> = HashMap::new();
-    let mut new_lines: Vec<String> = Vec::new();
-
-    for (i, line) in lines.clone().iter().enumerate() {
-        let mut macro_found = false;
-
-        if line.contains("[dont_run]") {
-            macro_lines.insert(i, Macro::DontRun);
-            macro_found = true;
-        }
-        if line.contains("[abs_path]") {
-            macro_lines.insert(i, Macro::AbsPath);
-            macro_found = true;
-        }
-
-        if macro_found {
-            let without_comment = &split(line, "--")[0];
-            new_lines.push(without_comment.trim().to_string());
-        } else {
-            new_lines.push(line.to_string());
-        }
-    }
-    return (macro_lines, new_lines);
-}
 
 fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) -> String {
     let mut root_path = root_path.clone();
@@ -304,8 +240,6 @@ fn main() -> Result<(), anyhow::Error> {
             beautify,
         );
 
-
-
         config = ConfigStruct {
             require_function,
             entry_file,
@@ -313,7 +247,6 @@ fn main() -> Result<(), anyhow::Error> {
             minify,
             beautify,
         };
-
 
         let confirm = Confirm::with_theme(&ColorfulTheme::default())
             .with_prompt("Confirm?")
