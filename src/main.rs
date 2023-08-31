@@ -1,4 +1,4 @@
-// #![allow(unused_parens)]
+#![allow(unused_parens)]
 
 // Library Imports
 
@@ -91,9 +91,10 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
                 None => {}
             }
 
-            let macro_type = match macros.get(&i) {
-                Some(macro_type) => macro_type,
-                None => &Macro::None,
+            let empty_vec: Vec<Macro> = Vec::new();
+            let mut macro_types: Vec<Macro> = match macros.get(&i) {
+                Some(macro_types) => macro_types.to_vec(),
+                None => empty_vec.clone(),
             };
 
 
@@ -101,15 +102,20 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             let relative_folder = relative_folder.parent().unwrap(); // root\folder
             let relative_folder = PathBuf::from(relative_folder); 
 
-            if macro_type != &Macro::AbsPath {
-                root_path = relative_folder.clone();
-            }
-
             let require_split = format!("{}(", require_function); // loadmodule(
             let require_content = &split(&line, &require_split)[1]; // "module.lua")
             let require_content = &split(require_content, ")")[0].clone(); // "module.lua"
-            let require_content = &require_content.replace("\"", ""); // removing double quotes
-            let require_content = &require_content.replace("'", ""); // removing single quotes
+            let mut require_content = require_content.trim_matches(|c| c == '"' || c == '\''); // removing quotes
+
+            let has_at_symbol = require_content.contains("@");
+            if has_at_symbol { 
+                require_content = require_content.trim_start_matches("@");
+                macro_types.push(Macro::AbsPath);
+            }
+
+            if macro_types.contains(&Macro::AbsPath) == false {
+                root_path = relative_folder.clone();
+            }
 
             let require_path = root_path.join(require_content);
 
@@ -118,14 +124,21 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
                 std::process::exit(1);
             }
 
-            let whole_function = format!("loadmodule(\"{}\")", require_content); // loadmodule("module.lua")
+            let whole_function = format!(
+                "{function}(\"{at_symbol}{content}\")", 
+                function = require_function,
+                at_symbol = if has_at_symbol { "@" } else { "" },
+                content = require_content
+            
+            ); // loadmodule("module.lua")
 
+            let call_function = macro_types.contains(&Macro::DontRun) == false;
             let output = format!(
                 "{semicolon}(function() {content} end){function_call}",
 
                 semicolon = (if add_semicolon { ";" } else { "" }),
                 content = (parse(&root_path, require_path, require_function)),
-                function_call = (if macro_type != &Macro::DontRun { "()" } else { "" }),
+                function_call = (if call_function { "()" } else { "" }),
             );
 
             let output = line.replace(&whole_function, output.as_str());
