@@ -53,28 +53,29 @@ struct Args {
     active: bool,   
 }
 
-
-
 // Functions
-
 
 fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) -> String {
     let mut root_path = root_path.clone();
+    let file_name = input_file.file_name().unwrap().to_str().unwrap();
 
     let input_string = fs::read_to_string(&input_file).unwrap();
-    let mut lines: Vec<String> = split(&input_string, "\n");
-    
-    let (macros, new_lines) = get_macros(&lines); // remove comments and get macros
+    let input_string = input_string.replace("{{filename}}", file_name); // filename global variable
 
+    let mut lines: Vec<String> = split(&input_string, "\n");
+
+    let (macros, new_lines) = get_macros(&lines); // remove comments and get macros
     lines = new_lines;
 
     lines = lines.iter().map(|s| s.trim().to_string()).collect(); // remove whitespace
     lines.retain(|x| !x.is_empty()); // remove empty lines
 
+    let relative_file_name = input_file.strip_prefix(root_path.clone()).unwrap();
+
     let mut new_lines: Vec<String> = Vec::new();
+
     for (i, line) in lines.iter().enumerate() {
         if line.contains(require_function) {
-            
             if require_function_commented(line.clone(), require_function.clone()) {
                 new_lines.push(line.to_string());
                 continue;
@@ -96,7 +97,6 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
                 Some(macro_types) => macro_types.to_vec(),
                 None => empty_vec.clone(),
             };
-
 
             let relative_folder = input_file.to_path_buf(); // root\folder\module.lua
             let relative_folder = relative_folder.parent().unwrap(); // root\folder
@@ -133,12 +133,14 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             ); // loadmodule("module.lua")
 
             let call_function = macro_types.contains(&Macro::DontRun) == false;
+            let path_comment = format!("_[[{}]];\n", relative_file_name.display()); // cant add regular comment because darklua removes them
+
             let output = format!(
-                "{semicolon}(function() {content} end){function_call}",
+                "{semicolon}(function() {path_comment} {content} end){function_call}",
 
                 semicolon = (if add_semicolon { ";" } else { "" }),
                 content = (parse(&root_path, require_path, require_function)),
-                function_call = (if call_function { "()" } else { "" }),
+                function_call = (if call_function { "()" } else { "" })
             );
 
             let output = line.replace(&whole_function, output.as_str());
@@ -157,6 +159,9 @@ fn bundle(config: &ConfigStruct) {
     let entry_file = root_path.join(&config.entry_file);
 
     let output = parse(&root_path, entry_file, &config.require_function);
+
+    let output = format!("_=function(arg)end\n{}", output); // make a function for comments
+
     fs::write(root_path.join(&config.output_file), output).unwrap();
 
     // ---------- minify or beautify ----------
