@@ -304,6 +304,7 @@ fn main() -> Result<(), anyhow::Error> {
     }
 
     if active_bundling {
+        cprintln!("<bold> Active Bundling Enabled </>\n");
         loop {
             handle_active_bundling();
         }
