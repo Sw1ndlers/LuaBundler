@@ -1,3 +1,5 @@
+#![allow(unused_parens)]
+
 // Library Imports
 use std::{env, fs, path::PathBuf, fmt::Debug, collections::HashMap};
 use anyhow;
@@ -148,7 +150,7 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             match last_line {
                 Some(last_line) => {
                     let last_line = last_line.trim();
-                    add_semicolon = last_line.ends_with(")")
+                    add_semicolon = (last_line.ends_with(")") && line.contains("=") == false)
                 }
                 None => {}
             }
