@@ -12,7 +12,7 @@ use crate::utils::{
 };
 
 use dialoguer::{theme::ColorfulTheme, Confirm, Input};
-use std::{env, fs, path::PathBuf, fmt::Debug};
+use std::{env, fs, path::PathBuf, fmt::{Debug, format}};
 use serde::{Deserialize, Serialize};
 
 use color_print::cprintln;
@@ -74,7 +74,7 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
 
     let mut new_lines: Vec<String> = Vec::new();
 
-    for (i, line) in lines.iter().enumerate() {
+    for (i, mut line) in lines.iter().enumerate() {
         if line.contains(require_function) {
             if require_function_commented(line.clone(), require_function.clone()) {
                 new_lines.push(line.to_string());
@@ -105,7 +105,20 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             let require_split = format!("{}(", require_function); // loadmodule(
             let require_content = &split(&line, &require_split)[1]; // "module.lua")
             let require_content = &split(require_content, ")")[0].clone(); // "module.lua"
-            let mut require_content = require_content.trim_matches(|c| c == '"' || c == '\''); // removing quotes
+            
+            let mut arguments_split = split(require_content, ","); // "module.lua", arg1, arg2
+            arguments_split.remove(0);
+            let arguments = &arguments_split.join(","); // arg2, arg3
+
+            let line_replace = line.replace(arguments, "");
+            line = &line_replace;
+
+            let line_replace = line.replace(",", "");
+            line = &line_replace;
+
+            let require_content = require_content.trim_end_matches(arguments);
+            let require_content = require_content.trim_matches(|c| c == '"' || c == '\'' || c == ','); // removing quotes and comma's from start and end
+            let mut require_content = require_content.trim_matches(|c| c == '"' || c == '\''); // removing extra double quotes (im lazy)
 
             let has_at_symbol = require_content.contains("@");
             if has_at_symbol { 
@@ -132,15 +145,15 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             
             ); // loadmodule("module.lua")
 
-            let call_function = macro_types.contains(&Macro::DontRun) == false;
             let path_comment = format!("_[[{}]];\n", relative_file_name.display()); // cant add regular comment because darklua removes them
+            let function_call_args = format!("({})", arguments);
 
             let output = format!(
-                "{semicolon}(function() {path_comment} {content} end){function_call}",
+                "{semicolon}(function(...) {path_comment} {content} end){function_call}",
 
                 semicolon = (if add_semicolon { ";" } else { "" }),
                 content = (parse(&root_path, require_path, require_function)),
-                function_call = (if call_function { "()" } else { "" })
+                function_call = (&function_call_args)
             );
 
             let output = line.replace(&whole_function, output.as_str());

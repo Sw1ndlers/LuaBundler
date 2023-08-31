@@ -58,10 +58,6 @@ pub fn get_macros(lines: &Vec<String>) -> (HashMap<usize, Vec<Macro>>, Vec<Strin
         let mut macro_found = false;
         let mut macros = Vec::new();
 
-        if line.contains("[dont_run]") {
-            macros.push(Macro::DontRun);
-            macro_found = true;
-        }
         if line.contains("[abs_path]") {
             macros.push(Macro::AbsPath);
             macro_found = true;
