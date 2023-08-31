@@ -12,7 +12,7 @@ use crate::utils::{
 };
 
 use dialoguer::{theme::ColorfulTheme, Confirm, Input};
-use std::{env, fs, path::PathBuf, fmt::{Debug, format}};
+use std::{env, fs, path::PathBuf, fmt::Debug};
 use serde::{Deserialize, Serialize};
 
 use color_print::cprintln;
