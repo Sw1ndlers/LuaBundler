@@ -70,7 +70,7 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
     lines = lines.iter().map(|s| s.trim().to_string()).collect(); // remove whitespace
     lines.retain(|x| !x.is_empty()); // remove empty lines
 
-    let relative_file_name = input_file.strip_prefix(root_path.clone()).unwrap();
+    // let relative_file_name = input_file.strip_prefix(root_path.clone()).unwrap();
 
     let mut new_lines: Vec<String> = Vec::new();
 
@@ -145,11 +145,11 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             
             ); // loadmodule("module.lua")
 
-            let path_comment = format!("_[[{}]];\n", relative_file_name.display()); // cant add regular comment because darklua removes them
+            // let path_comment = format!("_[[{}]];\n", relative_file_name.display()); // cant add regular comment because darklua removes them
             let function_call_args = format!("({})", arguments);
 
             let output = format!(
-                "{semicolon}(function(...) {path_comment} {content} end){function_call}",
+                "{semicolon}(function(...) {content} end){function_call}",
 
                 semicolon = (if add_semicolon { ";" } else { "" }),
                 content = (parse(&root_path, require_path, require_function)),
@@ -173,13 +173,15 @@ fn bundle(config: &ConfigStruct) {
 
     let output = parse(&root_path, entry_file, &config.require_function);
 
-    let output = format!("_=function(arg)end\n{}", output); // make a function for comments
+    // let output = format!("_=function(arg)end\n{}", output); // make a function for comments
+    let output = format!("Bundled with LuaBundle\n{}", output); // make a function for comments
 
     fs::write(root_path.join(&config.output_file), output).unwrap();
 
     // ---------- minify or beautify ----------
     
     if config.minify || config.beautify {
+        println!("Formatting...");
         format_file(&PathBuf::from(&config.output_file), config.minify, config.beautify)
     }
 }

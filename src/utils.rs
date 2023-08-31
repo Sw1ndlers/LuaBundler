@@ -4,7 +4,6 @@ use stacker;
 
 #[derive(Eq, Hash, PartialEq, Clone, Debug)]
 pub enum Macro {
-    DontRun,
     AbsPath
 }
 
