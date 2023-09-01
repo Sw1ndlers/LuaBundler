@@ -107,7 +107,7 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             let require_content = &split(require_content, ")")[0].clone(); // "module.lua"
             
             let mut arguments_split = split(require_content, ","); // "module.lua", arg1, arg2
-            arguments_split.remove(0);
+            arguments_split.remove(0); // removing "module.lua"
             let arguments = &arguments_split.join(","); // arg2, arg3
 
             let line_replace = line.replace(arguments, "");
@@ -174,7 +174,7 @@ fn bundle(config: &ConfigStruct) {
     let output = parse(&root_path, entry_file, &config.require_function);
 
     // let output = format!("_=function(arg)end\n{}", output); // make a function for comments
-    let output = format!("Bundled with LuaBundle\n{}", output); // make a function for comments
+    let output = format!("-- Bundled with LuaBundle\n{}", output); // make a function for comments
 
     fs::write(root_path.join(&config.output_file), output).unwrap();
 
