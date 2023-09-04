@@ -72,8 +72,6 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
     lines = lines.iter().map(|s| s.trim().to_string()).collect(); // remove whitespace
     lines.retain(|x| !x.is_empty()); // remove empty lines
 
-    // let relative_file_name = input_file.strip_prefix(root_path.clone()).unwrap();
-
     let mut new_lines: Vec<String> = Vec::new();
 
     for (i, mut line) in lines.iter().enumerate() {
@@ -83,16 +81,20 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
                 continue;
             }
 
-            let last_line = lines.get(i - 1);
             let mut add_semicolon = false;
 
-            match last_line {
-                Some(last_line) => {
-                    let last_line = last_line.trim();
-                    add_semicolon = (last_line.ends_with(")") && line.contains("=") == false)
+            if i != 0 {
+                let last_line = lines.get(i - 1);
+    
+                match last_line {
+                    Some(last_line) => {
+                        let last_line = last_line.trim();
+                        add_semicolon = (last_line.ends_with(")") && line.contains("=") == false)
+                    }
+                    None => {}
                 }
-                None => {}
             }
+
 
             let empty_vec: Vec<Macro> = Vec::new();
             let mut macro_types: Vec<Macro> = match macros.get(&i) {
@@ -202,7 +204,7 @@ fn handle_active_bundling() {
 
     let root_path = env::current_dir().unwrap();
 
-    let config_path = root_path.join("lbundle.json");
+    let config_path = root_path.join("LuaBundler/config.json");
     let config_string = fs::read_to_string(config_path).unwrap();
     let config: ConfigStruct = serde_json::from_str(&config_string).unwrap();
 
@@ -229,7 +231,13 @@ fn main() -> Result<(), anyhow::Error> {
     let active_bundling = args.active;
 
     let root_path = env::current_dir().unwrap();
-    let config_path = root_path.join("lbundle.json");
+
+    let luabundler_path = root_path.join("LuaBundler");
+    if !luabundler_path.is_dir() {
+        fs::create_dir(luabundler_path).unwrap();
+    }
+
+    let config_path = root_path.join("LuaBundler/config.json");
     let config: ConfigStruct;
 
     // if config does not exist, create it
@@ -246,7 +254,7 @@ fn main() -> Result<(), anyhow::Error> {
 
         let output_file = Input::new()
             .with_prompt("Output File")
-            .default("bundled.lua".to_string())
+            .default("LuaBundler/bundled.lua".to_string())
             .interact().unwrap();
 
         let minify = Confirm::with_theme(&ColorfulTheme::default())
@@ -299,7 +307,7 @@ fn main() -> Result<(), anyhow::Error> {
         }
 
         let json = serde_json::to_string(&config).unwrap();
-        fs::write(root_path.join("lbundle.json"), json).unwrap();
+        fs::write(root_path.join("LuaBundler/config.json"), json).unwrap();
 
         cprintln!("\n<bold><green>Setup complete!</green> Run the program again to bundle your code.</>\nPress Enter to Exit");
         std::io::stdin().read_line(&mut String::new()).unwrap();

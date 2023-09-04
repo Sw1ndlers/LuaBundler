@@ -8,7 +8,6 @@ pub enum Macro {
 }
 
 pub fn split(input: &str, to_split: &str) -> Vec<String> {
-    // splits a string into a vector of strings
     let res: Vec<String> = input.split(to_split).map(|s| s.to_string()).collect();
     return res;
 }
