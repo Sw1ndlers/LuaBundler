@@ -95,7 +95,6 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
                 }
             }
 
-
             let empty_vec: Vec<Macro> = Vec::new();
             let mut macro_types: Vec<Macro> = match macros.get(&i) {
                 Some(macro_types) => macro_types.to_vec(),
