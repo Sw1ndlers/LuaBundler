@@ -24,6 +24,8 @@ use anyhow;
 
 // make windows support ansi colors | REG ADD HKCU\CONSOLE /f /v VirtualTerminalLevel /t REG_DWORD /d 1
 
+const WORKSPACE_FOLDER: &str = "\\Packages\\ROBLOXCORPORATION.ROBLOX_55nm5eh3cm0pr\\AC\\workspace\\";
+
 // Structs
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ConfigStruct {
@@ -172,10 +174,6 @@ fn bundle(config: &ConfigStruct) {
     let entry_file = root_path.join(&config.entry_file);
 
     let output = parse(&root_path, entry_file, &config.require_function);
-
-    // let output = format!("_=function(arg)end\n{}", output); // make a function for comments
-    let output = format!("-- Bundled with LuaBundle\n{}", output); // make a function for comments
-
     fs::write(root_path.join(&config.output_file), output).unwrap();
 
     // ---------- minify or beautify ----------
@@ -184,8 +182,16 @@ fn bundle(config: &ConfigStruct) {
         println!("Formatting...");
         format_file(&PathBuf::from(&config.output_file), config.minify, config.beautify)
     }
+
+    // read output file and write it to the same file with -- Bundled with LuaBundle
+    let output_file_path = root_path.join(&config.output_file);
+    let mut output_file = fs::read_to_string(output_file_path).unwrap();
+
+    output_file = format!("-- Bundled with LuaBundle\n\n{}", output_file);
+    fs::write(root_path.join(&config.output_file), output_file).unwrap();
 }
 
+// ignore this, made very shittily
 fn handle_active_bundling() {
     std::io::stdin().read_line(&mut String::new()).unwrap();    // wait for input from console
 
@@ -207,7 +213,7 @@ fn handle_active_bundling() {
     let output_file = fs::read_to_string(output_file_path).unwrap();
 
     // send code to workspace folder
-    let roblox_path = env::var("LOCALAPPDATA").unwrap() + "\\Packages\\ROBLOXCORPORATION.ROBLOX_55nm5eh3cm0pr\\AC\\workspace\\";
+    let roblox_path = env::var("LOCALAPPDATA").unwrap() + WORKSPACE_FOLDER;
     let roblox_path = PathBuf::from(roblox_path);
 
     let roblox_output_file_path = roblox_path.join(&config.output_file);
@@ -313,5 +319,6 @@ fn main() -> Result<(), anyhow::Error> {
     bundle(&config.clone());
 
     cprintln!("<green>Bundled in: </green><cyan>{:?}</cyan>", start.elapsed());
+    
     Ok(())
 }
