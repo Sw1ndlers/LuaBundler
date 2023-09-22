@@ -3,11 +3,11 @@
 A customizable Lua Bundler made in rust
 
 ## Options
-Require Function `(default loadmodule)` <br>
-Entry File `(default main.lua)` <br>
-Output File `(default LuaBundler/bundled.lua)` <br>
-Minify `(default false)` <br>
-Beautify `(default true)` <br>
+Require Function - `(default loadmodule)` <br>
+Entry File - `(default main.lua)` <br>
+Output File - `(default LuaBundler/bundled.lua)` <br>
+Minify - `(default false)` <br>
+Beautify - `(default true)` <br>
 
 ## Usage
 Files that are being required should be treated like a module script <br>
