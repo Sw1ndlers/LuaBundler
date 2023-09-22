@@ -217,8 +217,9 @@ fn handle_active_bundling() {
     let roblox_path = env::var("LOCALAPPDATA").unwrap() + WORKSPACE_FOLDER;
     let roblox_path = PathBuf::from(roblox_path);
 
-    let roblox_output_file_path = roblox_path.join(&config.output_file);
-    fs::write(roblox_output_file_path, output_file).unwrap();
+    let workspace_output_path = roblox_path.join("bundled.lua");
+
+    fs::write(workspace_output_path, output_file).unwrap();
     
     cprintln!("<green>Bundled in: </green><cyan>{:?}</cyan>", start.elapsed());
 }
