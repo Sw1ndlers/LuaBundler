@@ -3,13 +3,13 @@
 A customizable Lua Bundler made in rust
 
 ## Options
-Require Function (default `loadmodule`)
-Entry File (default `main.lua`)
-Output File (default `LuaBundler/bundled.lua`)
-Minify (default `false`)
-Beautify (deafult `true`)
+Require Function (default `loadmodule`) <br>
+Entry File (default `main.lua`) <br>
+Output File (default `LuaBundler/bundled.lua`) <br>
+Minify (default `false`) <br>
+Beautify (deafult `true`) <br>
 
 ## Usage
-Files that are being required should be treated like a module script
-Use the require function and pass in a path to a file `(paths are relative to the current file)`
-Use @ before the path to access the root, ex `loadmodule("@fileAtRootFolder.lua")`
+Files that are being required should be treated like a module script <br>
+Use the require function and pass in a path to a file `(paths are relative to the current file)` <br>
+Use @ before the path to access the root, ex `loadmodule("@fileAtRootFolder.lua")` <br>
