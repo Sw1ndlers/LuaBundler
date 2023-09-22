@@ -10,7 +10,8 @@ Minify - `(default false)` <br>
 Beautify - `(default true)` <br>
 
 ## Setup
-Run luabundle in command prompt to create a new project in the current directory <br?
+Download luabundle from cargo <br>
+Run luabundle in command prompt to create a new project in the current directory <br>
 Run luabundle again to bundle your code to the output file <br>
 
 ## Usage
