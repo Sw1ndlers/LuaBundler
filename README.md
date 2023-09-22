@@ -10,9 +10,9 @@ Minify - `(default false)` <br>
 Beautify - `(default true)` <br>
 
 ## Setup
-Download luabundle from cargo <br>
-Run luabundle in command prompt to create a new project in the current directory <br>
-Run luabundle again to bundle your code to the output file <br>
+1. Download luabundle from cargo <br>
+2. Run luabundle in command prompt to create a new project in the current directory <br>
+3. Run luabundle again to bundle your code to the output file <br>
 
 ## Usage
 Files that are being required should be treated like a module script <br>
