@@ -37,16 +37,6 @@ struct ConfigStruct {
     beautify: bool,
 }
 
-#[derive(Debug, clap::Args)]
-pub struct Options {
-    /// Path to the lua file to minify.
-    input_path: PathBuf,
-    /// Where to output the result.
-    output_path: PathBuf,
-    /// The maximum number of characters that should be written on a line.
-    #[arg(long)]
-    column_span: Option<usize>,
-}
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -56,6 +46,28 @@ struct Args {
 }
 
 // Functions
+
+fn get_relative_folder(input_file: &PathBuf) -> PathBuf {
+    let mut relative_folder = input_file.to_path_buf(); // root\folder\module.lua
+    relative_folder = relative_folder.parent().unwrap().to_path_buf(); // root\folder
+    relative_folder = PathBuf::from(relative_folder);
+    return relative_folder;
+}
+
+fn get_require_content(line: &String, require_function: &String) -> String {
+    let require_split = format!("{}(", require_function); // loadmodule(
+    let require_content = &split(&line, &require_split)[1]; // "module.lua")
+    let require_content = &split(require_content, ")")[0].clone(); // "module.lua"
+    
+    return require_content.to_string();
+}
+
+fn get_require_arguments(require_content: &String) -> String {
+    let mut arguments = split(&require_content, ","); // "module.lua", arg1, arg2
+    arguments.remove(0); // removing "module.lua"
+
+    return arguments.join(","); // arg2, arg3
+}
 
 fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) -> String {
     let mut root_path = root_path.clone();
@@ -84,44 +96,28 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             let mut add_semicolon = false;
 
             if i != 0 {
-                let last_line = lines.get(i - 1);
-    
-                match last_line {
-                    Some(last_line) => {
-                        let last_line = last_line.trim();
-                        add_semicolon = (last_line.ends_with(")") && line.contains("=") == false)
-                    }
-                    None => {}
+                if let Some(line_before) = lines.get(i - 1) {
+                    let line_before = line_before.trim();
+                    add_semicolon = line_before.ends_with(")") && !line.contains("=");
                 }
             }
 
-            let empty_vec: Vec<Macro> = Vec::new();
             let mut macro_types: Vec<Macro> = match macros.get(&i) {
-                Some(macro_types) => macro_types.to_vec(),
-                None => empty_vec.clone(),
+                Some(macro_types) => macro_types.to_owned(),
+                None => Vec::new(),
             };
 
-            let relative_folder = input_file.to_path_buf(); // root\folder\module.lua
-            let relative_folder = relative_folder.parent().unwrap(); // root\folder
-            let relative_folder = PathBuf::from(relative_folder); 
+            let relative_folder = get_relative_folder(&input_file);
+            let require_content = get_require_content(&line, &require_function);
+            let arguments = get_require_arguments(&require_content);
 
-            let require_split = format!("{}(", require_function); // loadmodule(
-            let require_content = &split(&line, &require_split)[1]; // "module.lua")
-            let require_content = &split(require_content, ")")[0].clone(); // "module.lua"
-            
-            let mut arguments_split = split(require_content, ","); // "module.lua", arg1, arg2
-            arguments_split.remove(0); // removing "module.lua"
-            let arguments = &arguments_split.join(","); // arg2, arg3
+            let mut line_replace = line.replace(&arguments, "");
+            line_replace = line_replace.replace(",", ""); 
+            line = &line_replace; 
 
-            let line_replace = line.replace(arguments, "");
-            line = &line_replace;
-
-            let line_replace = line.replace(",", "");
-            line = &line_replace;
-
-            let require_content = require_content.trim_end_matches(arguments);
-            let require_content = require_content.trim_matches(|c| c == '"' || c == '\'' || c == ','); // removing quotes and comma's from start and end
-            let mut require_content = require_content.trim_matches(|c| c == '"' || c == '\''); // removing extra double quotes (im lazy)
+            let mut require_content = require_content.trim_end_matches(&arguments); // removing arguments from end
+            require_content = require_content.trim_matches(|c| c == '"' || c == '\'' || c == ','); // removing quotes and comma's from start and end
+            require_content = require_content.trim_matches(|c| c == '"' || c == '\''); // removing extra double quotes (im lazy)
 
             let has_at_symbol = require_content.contains("@");
             if has_at_symbol { 
@@ -134,7 +130,6 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
             }
 
             let require_path = root_path.join(require_content);
-
             if !require_path.is_file() {
                 println!("File not found: {}", require_path.display());
                 std::process::exit(1);
@@ -166,15 +161,21 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
         }
     }
 
-    let output = new_lines.join("\n");
-    return output;
+    return new_lines.join("\n");
 }
 
 fn bundle(config: &ConfigStruct) {
     let root_path = env::current_dir().unwrap();
     let entry_file = root_path.join(&config.entry_file);
 
+    if !entry_file.is_file() {
+        println!("Entry File {:?} not found, make sure it exists in the root directory", entry_file.file_name().unwrap());
+        std::process::exit(1);
+    }
+
     let output = parse(&root_path, entry_file, &config.require_function);
+    let output = format!("-- Bundled with LuaBundle\n\n{}", output);
+
     fs::write(root_path.join(&config.output_file), output).unwrap();
 
     // ---------- minify or beautify ----------
@@ -183,13 +184,6 @@ fn bundle(config: &ConfigStruct) {
         println!("Formatting...");
         format_file(&PathBuf::from(&config.output_file), config.minify, config.beautify)
     }
-
-    // read output file and write it to the same file with -- Bundled with LuaBundle
-    let output_file_path = root_path.join(&config.output_file);
-    let mut output_file = fs::read_to_string(output_file_path).unwrap();
-
-    output_file = format!("-- Bundled with LuaBundle\n\n{}", output_file);
-    fs::write(root_path.join(&config.output_file), output_file).unwrap();
 }
 
 // ignore this, made very shittily
