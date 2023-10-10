@@ -3,8 +3,8 @@
 A customizable Lua Bundler made in Rust  
 
 ## Setup
-1. Download `luabundle` from Cargo.  
-2. Run `luabundle` in the command prompt to create a new project in the current directory.  
+1. Run `cargo install luabundle`, it should download to your cargo bin folder.
+2. Run `luabundle` in the command prompt to create a new project and in the current directory.  
 3. Run `luabundle` again to bundle your code to the output file.  
 
 ## Options
