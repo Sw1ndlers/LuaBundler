@@ -1,13 +1,13 @@
 [package]
 name = "luabundle"
-version = "0.1.0-alpha"
+version = "1.1.0"
 authors = ["sw1ndler <@425797455486124032>"]
 edition = "2021"
 readme = "README.md"
-description = "A bundler for Luau scripts"
+description = "Bundler for Luau scripts"
 repository = "https://github.com/Sw1ndlerScripts/LuaBundler"
 license = "MIT"
-keywords = ["lua", "bundler", "luau", "bundle"]
+keywords = ["bundler", "luau"]
 
 [badges]
 github = { repository = "Sw1ndlerScripts/LuaBundler" }
