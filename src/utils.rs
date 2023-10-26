@@ -1,5 +1,5 @@
 use darklua_core::{Configuration, GeneratorParameters, Resources};
-use std::{path::PathBuf, collections::HashMap};
+use std::{path::PathBuf, collections::HashMap, io};
 use stacker;
 
 #[derive(Eq, Hash, PartialEq, Clone, Debug)]
@@ -71,4 +71,8 @@ pub fn get_macros(lines: &Vec<String>) -> (HashMap<usize, Vec<Macro>>, Vec<Strin
         }
     }
     return (macro_lines, new_lines);
+}
+
+pub fn wait_for_input() {
+    io::stdin().read_line(&mut String::new()).unwrap();
 }
