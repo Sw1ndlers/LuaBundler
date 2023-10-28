@@ -85,7 +85,7 @@ fn parse(root_path: &PathBuf, input_file: PathBuf, require_function: &String) ->
     for (i, mut line) in lines.iter().enumerate() {
         if line.contains(require_function) {
             if require_function_commented(line.clone(), require_function.clone()) {
-                new_lines.push(line.to_string());
+                new_lines.push(line.to_owned());
                 continue;
             }
 
@@ -189,7 +189,7 @@ fn bundle(config: &ConfigStruct) {
 
 // ignore this, made very shittily
 fn handle_active_bundling() {
-    std::io::stdin().read_line(&mut String::new()).unwrap(); // wait for input from console
+    wait_for_input();
 
     let start = std::time::Instant::now();
 
@@ -320,7 +320,7 @@ fn main() -> Result<(), anyhow::Error> {
         }
 
         cprintln!("\n<bold><green>Setup complete!</green> Run the program again to bundle your code.</>\nPress Enter to Exit");
-        
+
         wait_for_input();
         process::exit(0);
     } else {
