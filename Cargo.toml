@@ -10,7 +10,7 @@ license = "MIT"
 keywords = ["bundler", "luau"]
 
 [badges]
-github = { repository = "Sw1ndlerScripts/LuaBundler" }
+github = { repository = "Sw1ndlersLuaBundler" }
 
 
 [dependencies]
