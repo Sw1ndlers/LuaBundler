@@ -21,3 +21,31 @@ Use the `loadmodule` function and pass in a path to a file (paths are relative t
 Use `@` before the path to access the root, e.g., `loadmodule("@fileAtRootFolder.lua")`.  
 
 
+## Example
+Suppose you had a file layout like this
+
+```
+Project Directory/
+├── main.lua
+└── utils/
+    └── fancyprint.lua
+```
+
+Within main.lua
+```lua
+local fancyprint = loadmodule("utils/fancyprint.lua")
+fancyprint("Hello world!")
+```
+
+Within fancyprint.lua
+```lua
+local function fancyprint(text)
+  print(text + " was printed with fancy text")
+```
+
+Upon running luabundle, the output file would contain the runnable lua code 
+
+
+
+
+
