@@ -41,6 +41,9 @@ Within fancyprint.lua
 ```lua
 local function fancyprint(text)
   print(text + " was printed with fancy text")
+end
+
+return fancyprint
 ```
 
 Upon running luabundle, the output file would contain the runnable lua code 
