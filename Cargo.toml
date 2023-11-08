@@ -7,7 +7,6 @@ readme = "README.md"
 description = "Bundler for Luau scripts"
 repository = "https://github.com/Sw1ndlerScripts/LuaBundler"
 license = "MIT"
-license-file = "license.txt"
 keywords = ["bundler", "luau"]
 
 [dependencies]
