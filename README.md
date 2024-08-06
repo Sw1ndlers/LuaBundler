@@ -15,10 +15,10 @@ A customizable Lua Bundler made in Rust
 - Beautify (default `true`)
 
 ## Usage
-Create a file called `main.lua` (or what you set as the `Entry File`) in the root folder.  
-Files that are being required should be treated like a module script.  
-Use the `loadmodule` function and pass in a path to a file (paths are relative to the current file).  
-Use `@` before the path to access the root, e.g., `loadmodule("@fileAtRootFolder.lua")`.  
+- Create a file called `main.lua` (or what you set as the `Entry File`) in the root folder.  
+- Files that are being required should be treated like a module script.  
+- Use the `loadmodule` function and pass in a path to a file (paths are relative to the current file).  
+- Use `@` before the path to access the root, e.g., `loadmodule("@fileAtRootFolder.lua")`.  
 
 
 ## Example
